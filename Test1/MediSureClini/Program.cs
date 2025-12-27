@@ -1,217 +1,207 @@
-
 using System;
 
 namespace MediSureClinicBilling
 {
-    //represents  patient's bill details
-    public class PatientBill
+    // =======================
+    // Model Class
+    // =======================
+    // This class stores all details related to a single patient bill
+    public class BillRecord
     {
-        // Bill unique ID
-        public string BillId { get; set; }
+        // Unique bill number
+        public string BillNumber { get; set; }
 
         // Patient name
-        public string PatientName { get; set; }
+        public string Patient { get; set; }
 
-        // True if patient has insurance, otherwise false
-        public bool HasInsurance { get; set; }
+        // Indicates whether insurance is available or not
+        public bool InsuranceAvailable { get; set; }
 
         // Charges for doctor consultation
-        public decimal ConsultationFee { get; set; }
+        public decimal DoctorFee { get; set; }
 
         // Charges for lab tests
-        public decimal LabCharges { get; set; }
+        public decimal TestFee { get; set; }
 
         // Charges for medicines
-        public decimal MedicineCharges { get; set; }
+        public decimal MedicineFee { get; set; }
 
-        // Total amount before discount
-        public decimal GrossAmount { get; set; }
+        // Total bill amount before discount
+        public decimal TotalAmount { get; set; }
 
-        // Discount amount (insurance based)
-        public decimal DiscountAmount { get; set; }
+        // Discount applied due to insurance
+        public decimal InsuranceDiscount { get; set; }
 
-        // Final amount to be paid
-        public decimal FinalPayable { get; set; }
+        // Final amount to be paid by the patient
+        public decimal NetPayable { get; set; }
     }
 
-    // Main program class
-    class Program
+    // =======================
+    // Service Class
+    // =======================
+    // This class handles all billing operations
+    public static class BillingService
     {
-        // Stores the last created bill
-        static PatientBill LastBill = null;
+        // Stores the most recent bill created
+        private static BillRecord _latestBill;
 
-        // Flag to check whether last bill exists or not
-        static bool HasLastBill = false;
-
-        // Main method → program execution starts from here
-        static void Main(string[] args)
+        // Method to generate a new bill
+        public static void GenerateBill()
         {
-            int option = 0;
+            // Create a new bill object
+            BillRecord bill = new BillRecord();
 
-            // Do-while loop keeps running until user chooses Exit
-            do
+            // Read bill number
+            Console.Write("Bill Number: ");
+            bill.BillNumber = Console.ReadLine();
+
+            // Read patient name
+            Console.Write("Patient Name: ");
+            bill.Patient = Console.ReadLine();
+
+            // Validation: Bill number and patient name cannot be empty
+            if (string.IsNullOrWhiteSpace(bill.BillNumber) || string.IsNullOrWhiteSpace(bill.Patient))
             {
-                // Display menu options
-                Console.WriteLine("\nMediSure Clinic Billing");
-                Console.WriteLine("1. Create New Bill (Enter Patient Details)");
-                Console.WriteLine("2. View Last Bill");
-                Console.WriteLine("3. Clear Last Bill");
-                Console.WriteLine("4. Exit");
-                Console.Write("Enter your option: ");
+                Console.WriteLine("Bill number and patient name are mandatory.");
+                return;
+            }
 
-                // Read user input and check if it is a valid number
-                bool isValid = int.TryParse(Console.ReadLine(), out option);
+            // Read insurance availability (Y/N)
+            Console.Write("Insurance (Y/N): ");
+            bill.InsuranceAvailable = Console.ReadLine().Trim().ToUpper() == "Y";
 
-                // If input is not a number
-                if (!isValid)
-                {
-                    Console.WriteLine("Invalid input. Please enter a number between 1 and 4.");
-                    continue;
-                }
+            // Read all charge amounts
+            bill.DoctorFee = ReadAmount("Doctor Consultation Fee");
+            bill.TestFee = ReadAmount("Lab Test Charges");
+            bill.MedicineFee = ReadAmount("Medicine Charges");
 
-                // Switch case to perform action based on option
-                switch (option)
-                {
-                    case 1:
-                        // Create new bill
-                        CreateNewBill();
-                        break;
+            // Calculate total, discount and payable amount
+            CalculateAmounts(bill);
 
-                    case 2:
-                        // View last bill
-                        ViewLastBill();
-                        break;
+            // Store bill as latest bill
+            _latestBill = bill;
 
-                    case 3:
-                        // Clear last bill
-                        ClearLastBill();
-                        break;
-
-                    case 4:
-                        // Exit the application
-                        Console.WriteLine("\nThank you. Application closed normally.");
-                        break;
-
-                    default:
-                        Console.WriteLine("Invalid choice. Please select from 1 to 4.");
-                        break;
-                }
-
-            } while (option != 4); // Loop stops when user chooses Exit
+            // Display summary
+            Console.WriteLine("\n✔ Bill Generated Successfully");
+            Console.WriteLine($"Total Amount : {bill.TotalAmount:F2}");
+            Console.WriteLine($"Discount     : {bill.InsuranceDiscount:F2}");
+            Console.WriteLine($"Payable      : {bill.NetPayable:F2}");
         }
 
-        // Method to create a new patient bill
-        public static void CreateNewBill()
+        // Method to read and validate monetary values
+        private static decimal ReadAmount(string label)
         {
-            // Create object of PatientBill class
-            PatientBill bill = new PatientBill();
+            Console.Write($"Enter {label}: ");
 
-            // Read Bill ID
-            Console.Write("Enter Bill Id: ");
-            bill.BillId = Console.ReadLine().Trim();
-
-            // Validation: Bill ID should not be empty
-            if (string.IsNullOrEmpty(bill.BillId))
+            // Validate input: must be numeric and non-negative
+            if (!decimal.TryParse(Console.ReadLine(), out decimal value) || value < 0)
             {
-                Console.WriteLine("Bill Id cannot be empty.");
-                return;
+                Console.WriteLine("Invalid amount entered.");
+                Environment.Exit(0); // Exit program on invalid input
             }
 
-            // Read Patient Name
-            Console.Write("Enter Patient Name: ");
-            bill.PatientName = Console.ReadLine().Trim();
-
-            // Validation: Patient name should not be empty
-            if (string.IsNullOrEmpty(bill.PatientName))
-            {
-                Console.WriteLine("Patient name cannot be empty.");
-                return;
-            }
-
-            // Ask if patient has insurance
-            Console.Write("Is the patient insured? (Y/N): ");
-            string insuranceInput = Console.ReadLine().Trim().ToUpper();
-
-            // Convert Y/N input into boolean
-            bill.HasInsurance = insuranceInput == "Y";
-
-            // Read Consultation Fee
-            Console.Write("Enter Consultation Fee: ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal consult) || consult <= 0)
-            {
-                Console.WriteLine("Consultation Fee must be greater than 0.");
-                return;
-            }
-            bill.ConsultationFee = consult;
-
-            // Read Lab Charges
-            Console.Write("Enter Lab Charges: ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal lab) || lab < 0)
-            {
-                Console.WriteLine("Lab Charges cannot be negative.");
-                return;
-            }
-            bill.LabCharges = lab;
-
-            // Read Medicine Charges
-            Console.Write("Enter Medicine Charges: ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal med) || med < 0)
-            {
-                Console.WriteLine("Medicine Charges cannot be negative.");
-                return;
-            }
-            bill.MedicineCharges = med;
-
-            // Calculate Gross Amount
-            bill.GrossAmount = bill.ConsultationFee + bill.LabCharges + bill.MedicineCharges;
-
-            // Apply 10% discount if insured
-            bill.DiscountAmount = bill.HasInsurance ? bill.GrossAmount * 0.10m : 0;
-
-            // Calculate final payable amount
-            bill.FinalPayable = bill.GrossAmount - bill.DiscountAmount;
-
-            // Save bill as last bill
-            LastBill = bill;
-            HasLastBill = true;
-
-            // Display bill summary
-            Console.WriteLine("\nBill created successfully.");
-            Console.WriteLine($"Gross Amount: {bill.GrossAmount:F2}");
-            Console.WriteLine($"Discount Amount: {bill.DiscountAmount:F2}");
-            Console.WriteLine($"Final Payable: {bill.FinalPayable:F2}");
+            return value;
         }
 
-        // Method to display last bill
-        public static void ViewLastBill()
+        // Method to calculate total amount, discount, and final payable amount
+        private static void CalculateAmounts(BillRecord bill)
         {
-            // If no bill exists
-            if (!HasLastBill || LastBill == null)
+            // Calculate total amount
+            bill.TotalAmount = bill.DoctorFee + bill.TestFee + bill.MedicineFee;
+
+            // Apply 10% discount if insurance is available
+            bill.InsuranceDiscount = bill.InsuranceAvailable
+                                     ? bill.TotalAmount * 0.10m
+                                     : 0;
+
+            // Calculate net payable amount
+            bill.NetPayable = bill.TotalAmount - bill.InsuranceDiscount;
+        }
+
+        // Method to display the last generated bill
+        public static void ShowLastBill()
+        {
+            // Check if any bill exists
+            if (_latestBill == null)
             {
-                Console.WriteLine("No bill available. Please create a new bill first.");
+                Console.WriteLine("No billing record found.");
                 return;
             }
 
-            // Display last bill details
-            Console.WriteLine("\nLast Bill");
-            Console.WriteLine($"BillId: {LastBill.BillId}");
-            Console.WriteLine($"Patient: {LastBill.PatientName}");
-            Console.WriteLine($"Insured: {(LastBill.HasInsurance ? "Yes" : "No")}");
-            Console.WriteLine($"Consultation Fee: {LastBill.ConsultationFee:F2}");
-            Console.WriteLine($"Lab Charges: {LastBill.LabCharges:F2}");
-            Console.WriteLine($"Medicine Charges: {LastBill.MedicineCharges:F2}");
-            Console.WriteLine($"Gross Amount: {LastBill.GrossAmount:F2}");
-            Console.WriteLine($"Discount Amount: {LastBill.DiscountAmount:F2}");
-            Console.WriteLine($"Final Payable: {LastBill.FinalPayable:F2}");
+            // Display bill details
+            Console.WriteLine("\n------ Last Bill Details ------");
+            Console.WriteLine($"Bill No     : {_latestBill.BillNumber}");
+            Console.WriteLine($"Patient     : {_latestBill.Patient}");
+            Console.WriteLine($"Insurance   : {(_latestBill.InsuranceAvailable ? "Yes" : "No")}");
+            Console.WriteLine($"Doctor Fee  : {_latestBill.DoctorFee:F2}");
+            Console.WriteLine($"Lab Fee     : {_latestBill.TestFee:F2}");
+            Console.WriteLine($"Medicine Fee: {_latestBill.MedicineFee:F2}");
+            Console.WriteLine($"Total       : {_latestBill.TotalAmount:F2}");
+            Console.WriteLine($"Discount    : {_latestBill.InsuranceDiscount:F2}");
+            Console.WriteLine($"Payable     : {_latestBill.NetPayable:F2}");
             Console.WriteLine("--------------------------------");
         }
 
-        // Method to clear last bill
-        public static void ClearLastBill()
+        // Method to delete the last bill
+        public static void RemoveLastBill()
         {
-            LastBill = null;       // Remove bill object
-            HasLastBill = false;   // Reset flag
-            Console.WriteLine("Last bill cleared.");
+            _latestBill = null; // Clear stored bill
+            Console.WriteLine("Billing data cleared successfully.");
+        }
+    }
+
+    // =======================
+    // Program Class
+    // =======================
+    // Entry point of the application
+    class Program
+    {
+        static void Main()
+        {
+            int choice;
+
+            // Menu-driven loop
+            do
+            {
+                Console.WriteLine("\n=== MediSure Billing System ===");
+                Console.WriteLine("1. Generate New Bill");
+                Console.WriteLine("2. View Last Bill");
+                Console.WriteLine("3. Delete Last Bill");
+                Console.WriteLine("4. Exit");
+                Console.Write("Choose option: ");
+
+                // Validate menu input
+                if (!int.TryParse(Console.ReadLine(), out choice))
+                {
+                    Console.WriteLine("Please enter a valid numeric option.");
+                    continue;
+                }
+
+                // Perform action based on user choice
+                switch (choice)
+                {
+                    case 1:
+                        BillingService.GenerateBill();
+                        break;
+
+                    case 2:
+                        BillingService.ShowLastBill();
+                        break;
+
+                    case 3:
+                        BillingService.RemoveLastBill();
+                        break;
+
+                    case 4:
+                        Console.WriteLine("Application terminated.");
+                        break;
+
+                    default:
+                        Console.WriteLine("Invalid menu selection.");
+                        break;
+                }
+
+            } while (choice != 4); // Loop until Exit option is chosen
         }
     }
 }
