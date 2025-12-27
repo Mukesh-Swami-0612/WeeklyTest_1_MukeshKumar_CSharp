@@ -1,266 +1,219 @@
-
 using System;
 
 namespace QuickMartProfitCalculator
 {
-    public class SaleTransaction
+    // ============================
+    // Class to store sale details
+    // ============================
+    class SaleInfo
     {
-        // Invoice number
-        public string InvoiceNo { get; set; }
+        // Invoice number of the sale
+        public string InvoiceNo;
 
-        // Name of customer
-        public string CustomerName { get; set; }
+        // Customer name
+        public string CustomerName;
 
-        // Name of item sold
-        public string ItemName { get; set; }
+        // Item name
+        public string ItemName;
 
-        // Quantity of items sold
-        public int Quantity { get; set; }
+        // Quantity sold
+        public int Quantity;
 
-        // Total purchase amount (cost price)
-        public decimal PurchaseAmount { get; set; }
+        // Cost price (total)
+        public decimal CostPrice;
 
-        // Total selling amount (selling price)
-        public decimal SellingAmount { get; set; }
+        // Selling price (total)
+        public decimal SellingPrice;
 
-        // Stores PROFIT / LOSS / BREAK-EVEN
-        public string ProfitOrLossStatus { get; set; }
+        // Profit / Loss / Break-Even
+        public string Result;
 
         // Amount of profit or loss
-        public decimal ProfitOrLossAmount { get; set; }
+        public decimal ResultAmount;
 
-        // Profit or loss percentage
-        public decimal ProfitMarginPercent { get; set; }
+        // Percentage of profit or loss
+        public decimal ResultPercent;
     }
 
-    // Main program class
+    // ============================
+    // Main Program Class
+    // ============================
     class Program
     {
-        // Stores last transaction object
-        static SaleTransaction LastTransaction = null;
+        // Variable to store last transaction
+        static SaleInfo lastSale = null;
 
-        // Flag to check whether transaction exists
-        static bool HasLastTransaction = false;
-
-        // Main method → execution starts from here
         static void Main(string[] args)
         {
-            int option = 0;
+            int choice;
 
-            // Loop runs until user selects Exit
+            // Menu keeps running until user exits
             do
             {
-                // Display menu
-                Console.WriteLine("\nQuickMart Traders");
-                Console.WriteLine("1. Create New Transaction (Enter Purchase & Selling Details)");
-                Console.WriteLine("2. View Last Transaction");
-                Console.WriteLine("3. Calculate Profit/Loss (Recompute & Print)");
+                Console.WriteLine("\n====== QuickMart Profit Calculator ======");
+                Console.WriteLine("1. Enter New Sale");
+                Console.WriteLine("2. Show Last Sale");
+                Console.WriteLine("3. Calculate Profit / Loss Again");
                 Console.WriteLine("4. Exit");
-                Console.Write("Enter your option: ");
+                Console.Write("Enter choice: ");
 
-                // Validate numeric input
-                bool isValid = int.TryParse(Console.ReadLine(), out option);
-
-                // If input is not a number
-                if (!isValid)
+                // Check if input is valid number
+                if (!int.TryParse(Console.ReadLine(), out choice))
                 {
-                    Console.WriteLine("Invalid input. Please enter a number between 1 and 4.");
+                    Console.WriteLine("Please enter a valid number.");
                     continue;
                 }
 
-                // Perform action based on option
-                switch (option)
+                // Perform operation based on choice
+                if (choice == 1)
                 {
-                    case 1:
-                        // Create new transaction
-                        CreateTransaction();
-                        break;
-
-                    case 2:
-                        // View last transaction
-                        ViewTransaction();
-                        break;
-
-                    case 3:
-                        // Recalculate profit/loss
-                        CalculateProfitLoss();
-                        break;
-
-                    case 4:
-                        // Exit program
-                        Console.WriteLine("\nThank you. Application closed normally.");
-                        break;
-
-                    default:
-                        Console.WriteLine("Invalid option. Please select 1 to 4.");
-                        break;
+                    AddNewSale();
+                }
+                else if (choice == 2)
+                {
+                    ShowSale();
+                }
+                else if (choice == 3)
+                {
+                    ReCalculate();
+                }
+                else if (choice == 4)
+                {
+                    Console.WriteLine("Program Closed.");
+                }
+                else
+                {
+                    Console.WriteLine("Invalid option.");
                 }
 
-            } while (option != 4); // Loop stops when option is 4
+            } while (choice != 4);
         }
 
-        // Method to create a new sale transaction
-        public static void CreateTransaction()
+        // ============================
+        // Method to enter sale details
+        // ============================
+        static void AddNewSale()
         {
-            // Create object of SaleTransaction class
-            SaleTransaction t = new SaleTransaction();
+            SaleInfo s = new SaleInfo();
 
             // Read invoice number
-            Console.Write("Enter Invoice No: ");
-            t.InvoiceNo = Console.ReadLine().Trim();
-
-            // Validate invoice number
-            if (string.IsNullOrEmpty(t.InvoiceNo))
-            {
-                Console.WriteLine("Invoice number cannot be empty.");
-                return;
-            }
+            Console.Write("Invoice No: ");
+            s.InvoiceNo = Console.ReadLine();
 
             // Read customer name
-            Console.Write("Enter Customer Name: ");
-            t.CustomerName = Console.ReadLine().Trim();
-
-            // Validate customer name
-            if (string.IsNullOrEmpty(t.CustomerName))
-            {
-                Console.WriteLine("Customer name cannot be empty.");
-                return;
-            }
+            Console.Write("Customer Name: ");
+            s.CustomerName = Console.ReadLine();
 
             // Read item name
-            Console.Write("Enter Item Name: ");
-            t.ItemName = Console.ReadLine().Trim();
-
-            // Validate item name
-            if (string.IsNullOrEmpty(t.ItemName))
-            {
-                Console.WriteLine("Item name cannot be empty.");
-                return;
-            }
+            Console.Write("Item Name: ");
+            s.ItemName = Console.ReadLine();
 
             // Read quantity
-            Console.Write("Enter Quantity: ");
-            if (!int.TryParse(Console.ReadLine(), out int qty) || qty <= 0)
+            Console.Write("Quantity: ");
+            if (!int.TryParse(Console.ReadLine(), out s.Quantity) || s.Quantity <= 0)
             {
-                Console.WriteLine("Quantity must be greater than 0.");
+                Console.WriteLine("Invalid quantity.");
                 return;
             }
-            t.Quantity = qty;
 
-            // Read purchase amount
-            Console.Write("Enter Purchase Amount (total): ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal purchase) || purchase <= 0)
+            // Read cost price
+            Console.Write("Purchase Amount: ");
+            if (!decimal.TryParse(Console.ReadLine(), out s.CostPrice) || s.CostPrice <= 0)
             {
-                Console.WriteLine("Purchase amount must be greater than 0.");
+                Console.WriteLine("Invalid purchase amount.");
                 return;
             }
-            t.PurchaseAmount = purchase;
 
-            // Read selling amount
-            Console.Write("Enter Selling Amount (total): ");
-            if (!decimal.TryParse(Console.ReadLine(), out decimal selling) || selling < 0)
+            // Read selling price
+            Console.Write("Selling Amount: ");
+            if (!decimal.TryParse(Console.ReadLine(), out s.SellingPrice) || s.SellingPrice < 0)
             {
-                Console.WriteLine("Selling amount cannot be negative.");
+                Console.WriteLine("Invalid selling amount.");
                 return;
             }
-            t.SellingAmount = selling;
 
-            // Check profit or loss condition
-            if (t.SellingAmount > t.PurchaseAmount)
+            // Calculate profit or loss
+            CalculateResult(s);
+
+            // Store last sale
+            lastSale = s;
+
+            Console.WriteLine("\nSale saved successfully.");
+            Console.WriteLine("Result: " + s.Result);
+            Console.WriteLine("Amount: " + s.ResultAmount);
+            Console.WriteLine("Percentage: " + s.ResultPercent);
+        }
+
+        // ============================
+        // Method to calculate result
+        // ============================
+        static void CalculateResult(SaleInfo s)
+        {
+            if (s.SellingPrice > s.CostPrice)
             {
                 // Profit case
-                t.ProfitOrLossStatus = "PROFIT";
-                t.ProfitOrLossAmount = t.SellingAmount - t.PurchaseAmount;
+                s.Result = "PROFIT";
+                s.ResultAmount = s.SellingPrice - s.CostPrice;
             }
-            else if (t.SellingAmount < t.PurchaseAmount)
+            else if (s.SellingPrice < s.CostPrice)
             {
                 // Loss case
-                t.ProfitOrLossStatus = "LOSS";
-                t.ProfitOrLossAmount = t.PurchaseAmount - t.SellingAmount;
+                s.Result = "LOSS";
+                s.ResultAmount = s.CostPrice - s.SellingPrice;
             }
             else
             {
                 // Break-even case
-                t.ProfitOrLossStatus = "BREAK-EVEN";
-                t.ProfitOrLossAmount = 0;
+                s.Result = "BREAK-EVEN";
+                s.ResultAmount = 0;
             }
 
-            // Calculate profit or loss percentage
-            t.ProfitMarginPercent = (t.ProfitOrLossAmount / t.PurchaseAmount) * 100;
-
-            // Save transaction
-            LastTransaction = t;
-            HasLastTransaction = true;
-
-            // Display result
-            Console.WriteLine("\nTransaction saved successfully.");
-            Console.WriteLine($"Status: {t.ProfitOrLossStatus}");
-            Console.WriteLine($"Profit/Loss Amount: {t.ProfitOrLossAmount:F2}");
-            Console.WriteLine($"Profit Margin (%): {t.ProfitMarginPercent:F2}");
+            // Calculate percentage
+            s.ResultPercent = (s.ResultAmount / s.CostPrice) * 100;
         }
 
-        // Method to display last transaction
-        public static void ViewTransaction()
+        // ============================
+        // Method to display last sale
+        // ============================
+        static void ShowSale()
         {
-            // Check if transaction exists
-            if (!HasLastTransaction || LastTransaction == null)
+            if (lastSale == null)
             {
-                Console.WriteLine("No transaction available. Please create a new transaction first.");
+                Console.WriteLine("No sale found.");
                 return;
             }
 
-            // Print transaction details
-            Console.WriteLine("\n Last Transaction ");
-            Console.WriteLine($"Invoice No: {LastTransaction.InvoiceNo}");
-            Console.WriteLine($"Customer: {LastTransaction.CustomerName}");
-            Console.WriteLine($"Item: {LastTransaction.ItemName}");
-            Console.WriteLine($"Quantity: {LastTransaction.Quantity}");
-            Console.WriteLine($"Purchase Amount: {LastTransaction.PurchaseAmount:F2}");
-            Console.WriteLine($"Selling Amount: {LastTransaction.SellingAmount:F2}");
-            Console.WriteLine($"Status: {LastTransaction.ProfitOrLossStatus}");
-            Console.WriteLine($"Profit/Loss Amount: {LastTransaction.ProfitOrLossAmount:F2}");
-            Console.WriteLine($"Profit Margin (%): {LastTransaction.ProfitMarginPercent:F2}");
-            Console.WriteLine("--------------------------------------------");
+            Console.WriteLine("\n------ Last Sale Details ------");
+            Console.WriteLine("Invoice No   : " + lastSale.InvoiceNo);
+            Console.WriteLine("Customer     : " + lastSale.CustomerName);
+            Console.WriteLine("Item         : " + lastSale.ItemName);
+            Console.WriteLine("Quantity     : " + lastSale.Quantity);
+            Console.WriteLine("Cost Price   : " + lastSale.CostPrice);
+            Console.WriteLine("Selling Price: " + lastSale.SellingPrice);
+            Console.WriteLine("Result       : " + lastSale.Result);
+            Console.WriteLine("Amount       : " + lastSale.ResultAmount);
+            Console.WriteLine("Percentage   : " + lastSale.ResultPercent);
+            Console.WriteLine("--------------------------------");
         }
 
-        // Method to recalculate profit or loss
-        public static void CalculateProfitLoss()
+        // ============================
+        // Method to recalculate result
+        // ============================
+        static void ReCalculate()
         {
-            // Check if transaction exists
-            if (!HasLastTransaction || LastTransaction == null)
+            if (lastSale == null)
             {
-                Console.WriteLine("No transaction available. Please create a new transaction first.");
+                Console.WriteLine("No sale found to calculate.");
                 return;
             }
-
-            // Use last transaction
-            SaleTransaction t = LastTransaction;
 
             // Recalculate profit/loss
-            if (t.SellingAmount > t.PurchaseAmount)
-            {
-                t.ProfitOrLossStatus = "PROFIT";
-                t.ProfitOrLossAmount = t.SellingAmount - t.PurchaseAmount;
-            }
-            else if (t.SellingAmount < t.PurchaseAmount)
-            {
-                t.ProfitOrLossStatus = "LOSS";
-                t.ProfitOrLossAmount = t.PurchaseAmount - t.SellingAmount;
-            }
-            else
-            {
-                t.ProfitOrLossStatus = "BREAK-EVEN";
-                t.ProfitOrLossAmount = 0;
-            }
+            CalculateResult(lastSale);
 
-            // Calculate percentage again
-            t.ProfitMarginPercent = (t.ProfitOrLossAmount / t.PurchaseAmount) * 100;
-
-            // Display recalculated result
-            Console.WriteLine("\nRecalculated Successfully!");
-            Console.WriteLine($"Status: {t.ProfitOrLossStatus}");
-            Console.WriteLine($"Profit/Loss Amount: {t.ProfitOrLossAmount:F2}");
-            Console.WriteLine($"Profit Margin (%): {t.ProfitMarginPercent:F2}");
+            Console.WriteLine("\nCalculation Updated!");
+            Console.WriteLine("Result: " + lastSale.Result);
+            Console.WriteLine("Amount: " + lastSale.ResultAmount);
+            Console.WriteLine("Percentage: " + lastSale.ResultPercent);
         }
     }
 }
