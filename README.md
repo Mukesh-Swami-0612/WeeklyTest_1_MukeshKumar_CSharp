@@ -1,1 +1,1 @@
-# WeeklyTest_1_MukeshKumar_CSharp
+# WeeklyTest_CSharp
