@@ -2,7 +2,7 @@ using System;
 
 namespace QuickMartProfitCalculator
 {
-    // ============================
+    // ===========================
     // Class to store sale details
     // ============================
     class SaleInfo
