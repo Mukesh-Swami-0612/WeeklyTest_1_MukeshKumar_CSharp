@@ -2,7 +2,7 @@ using System;
 
 namespace MediSureClinicBilling
 {
-    // =======================
+    // ======================
     // Model Class
     // =======================
     // This class stores all details related to a single patient bill
